@@ -37,9 +37,15 @@ public class Recorder : MonoBehaviour {
 	// dodaj še za 60 in 90 (treba še posnet)
 	int[] recordingTimes = {9, 15, 19};
 	// PLACEHOLDERS
-	int[] recordingTimes60 = {18, 30, 38};
-	int[] recordingTimes90 = {14, 23, 29};
-	int[] recordingTimes120 = {9, 15, 19};
+	// = song length + countdown length
+	// -> za kuza pazi je 16 sekund dolga pesem, coundown pr 60 bpm pa 4 sekunde = 20
+	// za 90 bi mogl bit med 13 in 14 (float)
+	int[] recordingTimes60 = {20, 30, 38};
+	int[] recordingTimes90 = {13, 23, 29};
+	int[] recordingTimes120 = {10, 15, 19};
+
+	// koliko tonov je zaigranih tekom pesmi
+	public static int[] songNoteSums = {16, 56, 72};
 
 	// nova tabela 'toni' ima samo tone, ki jih lahko zaigraš na kitari s standardno uglasitvijo EADGBE
 	public static string[] toni = {
@@ -91,7 +97,8 @@ public class Recorder : MonoBehaviour {
 		// TEMPO CHANGE --------------------------------------------------------------------------------------- TEMPO CHANGE
 		// introTime naj bo tabela treh časov za vsak tempo
 		// za 120 bpm je očitno idealno intro.length - 1.35f
-		introTime = intro.length - 1.35f;
+		//introTime = intro.length - 1.35f;
+		introTime = 0;
 
 		/*
 		int dspBufferLength, numBuffers;
@@ -105,6 +112,8 @@ public class Recorder : MonoBehaviour {
 		Microphone.GetDeviceCaps(Microphone.devices[0], out minFreqs, out maxFreqs);
 		print ( "AudioSettings.ouputSampleRate: " + AudioSettings.outputSampleRate + "; audio buffer size: " + dspBufferLength +"; numBuffers: "+numBuffers + "; numberOfMics: "+ numberOfMics  + "; minFrequency: " + minFreqs + "; maxFrequency: "+ maxFreqs + "; Is microphone started?" + Microphone.IsRecording(null)+ "; audio.clip.frequency: " + posnetek.clip.frequency );
 		*/
+
+		PlayerPrefs.SetInt ("tempo", 60);
 	}
 
 	void Update() {
@@ -131,7 +140,7 @@ public class Recorder : MonoBehaviour {
 				//WriteSong ();
 				//Songs.startCompare(PlayerPrefs.GetInt("currentsong", 0));
 				Songs.compareSelector(PlayerPrefs.GetInt("currentsong", 0));
-				//WriteAndCompareSongs ();
+				WriteAndCompareSongs ();
 				Target.image.enabled = false;
 			} 
 			/*else {
@@ -284,7 +293,8 @@ public class Recorder : MonoBehaviour {
 		stars.Disable ();
 		posnetek.clip = intro;
 		posnetek.volume = 1.0f;
-		Play ();
+		//Play ();
+		Countdown.Count();
 
 		// hard kodirano za kuža pazi NOT ANYMORE
 
@@ -343,7 +353,7 @@ public class Recorder : MonoBehaviour {
 		//InvokeRepeating ("SaveNote", 0, bpm);
 		//InvokeRepeating("BurstNote", 0, bpm);
 
-		Debug.Log ("recording has started");
+		//Debug.Log ("recording has started");
 
 		//endSound.Play ((float) recordingTime);
 		//endSound.Play ((float) recordingTimes[PlayerPrefs.GetInt("currentsong", 0)]);
@@ -578,16 +588,16 @@ public class Recorder : MonoBehaviour {
 		int idx = 0;
 		string tempNote = "";
 		string note = "";
-		int noteSize = 4;
+		int noteSize = 16;
 
-		for (int i = 16; i < Songs.song1.Count; i++) {
+		for (int i = 64; i < Songs.song1.Count; i++) {
 
-			if (Songs.cuksejeozenilNotes [idx] == "X") {
+			if (Songs.kuzapaziNotes [idx] == "X") {
 			
 				note = tempNote;
 			} else {
 			
-				note = Songs.cuksejeozenilNotes [idx];
+				note = Songs.kuzapaziNotes [idx];
 				tempNote = note;
 			}
 
@@ -595,11 +605,11 @@ public class Recorder : MonoBehaviour {
 			if (noteSize == 0) {
 			
 				idx++;
-				if (idx >= Songs.cuksejeozenilNotes.Length) {
+				if (idx >= Songs.kuzapaziNotes.Length) {
 				
 					break;
 				}
-				noteSize = 4;
+				noteSize = 16;
 			}
 
 			Debug.Log (Songs.song1 [i] + " " +  note);
@@ -611,7 +621,7 @@ public class Recorder : MonoBehaviour {
 		if (savingSong) {
 		
 			frequency = GetFrequency ();
-			string note = GetNote ((int) frequency);
+			string note = GetNote (frequency);
 			Songs.song1.Add (note);
 			//Debug.Log ("note saved");
 			//Songs.CompareNote (note);

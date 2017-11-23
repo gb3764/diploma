@@ -29,18 +29,18 @@ public class noteSpawner : MonoBehaviour {
 
 		if (tempo == 60) {
 
-			speed = 2.85f;
+			speed = 1.5f;
 			delay = 1f;
 		}
 		else if (tempo == 90) {
 
-			speed = 2.85f;
-			delay = 0.5f;
+			speed = 2.2f;
+			delay = 0.6f;
 		}
 		else if (tempo == 120) {
 
-			speed = 2.85f;
-			delay = 0.25f;
+			speed = 2.75f;
+			delay = 0.5f;
 		}
 
 		idx = 0;

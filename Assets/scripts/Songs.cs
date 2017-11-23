@@ -614,7 +614,7 @@ public class Songs : MonoBehaviour {
 		int tempScore = 0;
 		int interval = 1;
 
-		for (int i = 16; i < length; i++) {
+		for (int i = noteSize*4 + 8; i < length; i++) {
 
 			if (songArray [noteIdx] == "X") {
 
@@ -665,7 +665,8 @@ public class Songs : MonoBehaviour {
 		}
 
 		//float maxScore = length * 10;
-		float maxScore = songArray.Length * 10;
+		//float maxScore = songArray.Length * 10;
+		float maxScore = Recorder.songNoteSums[PlayerPrefs.GetInt("currentsong", 0)] * noteSize;
 		int songIdx = PlayerPrefs.GetInt ("currentsong", 0);
 		string songName = playerStats.songNames [songIdx];
 		int starCount = PlayerPrefs.GetInt (songName);
