@@ -143,4 +143,9 @@ public class Menu : MonoBehaviour {
 
 		PlayerPrefs.SetInt ("tempo", 120);
 	}
+
+	public void ToFeedback() {
+
+		SceneManager.LoadScene ("player feedback", LoadSceneMode.Single);
+	}
 }

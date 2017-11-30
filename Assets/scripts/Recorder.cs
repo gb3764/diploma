@@ -140,7 +140,7 @@ public class Recorder : MonoBehaviour {
 				//WriteSong ();
 				//Songs.startCompare(PlayerPrefs.GetInt("currentsong", 0));
 				Songs.compareSelector(PlayerPrefs.GetInt("currentsong", 0));
-				WriteAndCompareSongs ();
+				//WriteAndCompareSongs ();
 				Target.image.enabled = false;
 			} 
 			/*else {

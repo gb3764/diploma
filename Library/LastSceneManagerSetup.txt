@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/scenes/menu.unity
+- path: Assets/scenes/kuzapazi.unity
   isLoaded: 1
   isActive: 1

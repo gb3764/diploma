@@ -27,6 +27,11 @@ public class Songs : MonoBehaviour {
 	public static int noteCounter = 0;
 	public static int newKuzaPaziIndex = 0;
 
+	public static string[] playedData;
+	public static string[] tempoData;
+	public static string[] noteData;
+	public static string[] lestvica = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "note not detected"};
+
 	public static string[] songArray;
 
 	// vsi toni so brez številk, zaradi slabe implementacije zaznavanja frekvenc
@@ -614,6 +619,23 @@ public class Songs : MonoBehaviour {
 		int tempScore = 0;
 		int interval = 1;
 
+		bool firstInterval = true;
+		bool rushing = false;
+		bool dragging = false;
+		int rushCounter = 0;
+		int dragCounter = 0;
+		int lagCounter = 0;
+		int tempoScore = 0;
+		bool lagging = false;
+		string tempoNote = "";
+
+		playedData = new string[songArray.Length];
+		tempoData = new string[songArray.Length];
+		noteData = new string[songArray.Length];
+		int playedDataIndex = 0;
+		int tempoDataIndex = 0;
+		int noteDataIndex = 0;
+
 		for (int i = noteSize*4 + 8; i < length; i++) {
 
 			if (songArray [noteIdx] == "X") {
@@ -636,6 +658,78 @@ public class Songs : MonoBehaviour {
 				interval = 1;
 			}
 
+			/*
+			psevdo-sih koda za preverjanje tempa
+			
+			v taprvem intervalu preveri, ali prehiteva ali zamuja
+			-> če je prvih par napačnih (oz. note not detected) in šele nato pravilne -> zamuja
+			-> če je prvih par pravilnih nato pa v istem intervalu do konca napačne (naslednje pravilne) -> prehiteva
+			glede na eno ali drugo določi prehiteva = false/true
+			če zamuja (prehiteva = false)
+			-> v intervalu išči, če bo zaigral naslednjo pravilno noto
+			   (ubistvu ni nujno da je pravilna - čim zaigra drugo noto prehitr je to prehitevanje)
+			   -> je pa nujno da ni zaigrana trenutna pravilna nota, ker to pomen da še zmeri zamuja
+			   SEPRAVI
+               V INTERVALU IŠČI NOTO, KI NI TRENUTNO PRAVILNA, NITI NI PREJŠNJA
+			   če jo -> prehiteva = true
+			če prehiteva (prehiteva = true)
+			-> v intervalu išči katerokoli drugo noto
+			   če so v celem intervalu vse enake -> prehiteva = false
+
+			točkovanje
+
+			če zamuja
+			-> število vseh - število napačnih not, ubistvu isto kot je za navadno preverjanje pravilnosti
+			če prehiteva
+			-> število vseh - število napačnih not prejšnjega intervala, ki so pravilne v trenutnem
+
+			naredi nov list, v katerega za vsako igrano noto zapišeš:
+			- ali je bila pravilna
+			- katera nota je bila zaigrana (ni nujno) or is it?
+			- ali je bila prezgodnja ali prepozna
+			za to nared več listov al pa magar vse podatke v en string sprav
+			do note:
+			vse note, ki niso draggane so rushane
+			če je pri rushanju lagCounter == noteSize, potem sploh ni blo rushan ampak kul
+			če zaznaš rushanje, morš to zapisat za naslednjo noto, ne trenutno
+			(glej listke)
+			*/
+
+			// v prvem intervalu odkrij, če prehiteva ali zamuja
+			if (firstInterval && song1 [i].Substring (0, interval) != note) {
+
+				//dragCounter++;
+				//lagCounter++;
+				dragging = true;
+				firstInterval = false;
+				lagging = true;
+				tempoNote = note;
+			}
+			else if (firstInterval && song1 [i].Substring (0, interval) == note) {
+
+				//rushCounter++;
+				//lagCounter++;
+				rushing = true;
+				firstInterval = false;
+				lagging = true;
+			}
+			//firstInterval = false;
+			else if (lagging && dragging && song1 [i].Substring (0, interval) != tempoNote) {
+
+				//dragging = false;
+				lagging = false;
+			}
+			else if (lagging && rushing && song1 [i].Substring (0, interval) != note) {
+
+				//rushing = false;
+				lagging = false;
+			}
+			
+			if (lagging) {
+
+				lagCounter++;
+			}
+
 			if (song1 [i].Substring (0, interval) == note) {
 				
 				// niti ni važnen številčen score, važne so zvezdice
@@ -648,14 +742,112 @@ public class Songs : MonoBehaviour {
 
 			if (tempNoteSize == 0) {
 
-				if (tempScore >= noteSize/2) {
+				if (tempScore >= noteSize / 2) {
 
 					score += 10;
 					tempScore = 0;
+					//playedData [playedDataIndex] += "good";
+					noteData [noteDataIndex] = "good";
+				}
+				else {
+
+					//playedData [playedDataIndex] += "nope";
+					noteData [noteDataIndex] = "bad";
 				}
 
+				noteDataIndex++;
 				noteIdx++;
 				tempNoteSize = noteSize;
+
+				//firstInterval = false;
+				if (rushing) {
+
+					tempoScore += lagCounter;
+
+					if (lagCounter == noteSize) {
+
+						//playedData [playedDataIndex] += "good";
+						if (tempoData [tempoDataIndex] != "rush") {
+						
+							tempoData [tempoDataIndex] = "good";
+						}
+					}
+					else {
+
+						//playedData [playedDataIndex + 1] += "rush";
+						if (tempoDataIndex + 1 < tempoData.Length) {
+						
+							tempoData [tempoDataIndex + 1] = "rush";
+						}
+					}
+				}
+				else if (dragging) {
+
+					tempoScore += noteSize - lagCounter;
+					//playedData [playedDataIndex] += "drag";
+					if (tempoData [tempoDataIndex] != "rush") {
+					
+						tempoData [tempoDataIndex] = "drag";
+					}
+				}
+				// else se nikoli ne zgodi, ker če ne dragga, potem rusha
+				else {
+
+					tempoScore += noteSize;
+					//playedData [playedDataIndex] += "good";
+					if (tempoData [tempoDataIndex] != "rush") {
+					
+						tempoData [tempoDataIndex] = "good";
+					}
+				}
+				//playedDataIndex++;
+				tempoDataIndex++;
+				lagCounter = 0;
+				rushing = false;
+				dragging = false;
+				lagging = false;
+				firstInterval = true;
+
+				// find most common note (aka note played)
+				// condition should be correct, no?
+				string currentNoteCompare = "";
+				int[] playedNoteCounter = new int[lestvica.Length]; 
+				for (int j = i - noteSize + 1; j < i; j++) {
+
+					if (song1 [j].Length == 2) {
+
+						currentNoteCompare = song1 [i].Substring (0, 2);
+					}
+					else if (song1 [j].Length == 1) {
+
+						currentNoteCompare = song1 [i].Substring (0, 1);
+					}
+					else {
+
+						currentNoteCompare = song1 [i];
+					}
+
+					for (int k = 0; k < lestvica.Length; k++) {
+
+						if (currentNoteCompare == lestvica [k]) {
+
+							playedNoteCounter [k]++;
+						}
+					}
+				}
+
+				int currentIndex = 0;
+				int currentMax = 0;
+				for (int j = 0; j < playedNoteCounter.Length; j++) {
+
+					if (playedNoteCounter [j] > currentMax) {
+
+						currentMax = playedNoteCounter [j];
+						currentIndex = j;
+					}
+				}
+				playedData [playedDataIndex] = lestvica [currentIndex];
+				playedDataIndex++;
 
 				if (noteIdx >= songArray.Length) {
 
